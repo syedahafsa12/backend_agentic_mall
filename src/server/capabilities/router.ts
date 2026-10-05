@@ -2,7 +2,6 @@ import { recordAuditEvent } from "@/server/audit/log";
 import { buildConnector } from "@/server/connectors/factory";
 import type { SearchProductsInput } from "@/server/connectors/types";
 import { getActiveAuthorization, getMerchantById, listMerchants } from "@/server/merchants/repository";
-import { listMerchantKeywords, matchKeywordType } from "@/server/merchants/keywords";
 import type { MerchantRow } from "@/server/merchants/types";
 import type { Offer } from "@/server/offers/types";
 import { evaluatePolicy, type PolicyDecisionKind } from "@/server/policy/engine";
@@ -155,19 +154,7 @@ export async function searchAcrossMerchants(
 
   const settled = await Promise.allSettled(
     merchants.map(async (merchant): Promise<MerchantSearchResult> => {
-      // A merchant keyword can only extend the query text sent to that
-      // merchant's OWN connector with a product type its keyword already
-      // resolved to (e.g. "commuter" -> "bicycle") — it never invents a new
-      // type or affects any other merchant's search. See merchants/keywords.ts.
-      let perMerchantInput = input;
-      if (input.query) {
-        const keywords = await listMerchantKeywords(merchant.id);
-        const matchedType = matchKeywordType(keywords, input.query);
-        if (matchedType && !input.query.toLowerCase().includes(matchedType)) {
-          perMerchantInput = { ...input, query: `${input.query} ${matchedType}` };
-        }
-      }
-      const call = await callCapability("search_products", merchant.id, perMerchantInput as unknown as Record<string, unknown>, ctx);
+      const call = await callCapability("search_products", merchant.id, input as unknown as Record<string, unknown>, ctx);
       if (!call.ok) return { merchant, offers: [], blocked: call.reason };
       return { merchant, offers: (call.result as Offer[]) ?? [] };
     }),

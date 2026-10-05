@@ -19,15 +19,6 @@ export interface CatalogItem {
   warranty: { months: number | null; notes?: string };
   /** ISO timestamp override to simulate a merchant whose own systems are stale. Omit for "now". */
   retrievedAtOverride?: string;
-  /**
-   * The merchant's own structured product-type tags (e.g. ["bicycle"],
-   * ["hoodie","outerwear"]) — used by findProducts (rest-handlers.ts) for
-   * hard category filtering. Internal to search only: never sent to the
-   * agent/Offer (that still uses `category: "product" | "service"` above,
-   * an unrelated field for a different purpose). Omit for catalogs where no
-   * structured type exists; search then falls back to text matching.
-   */
-  productTypes?: string[];
 }
 
 export const NORTHSTAR_SLUG = "northstar-running";

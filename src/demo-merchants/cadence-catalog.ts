@@ -53,16 +53,6 @@ const CADENCE_PRODUCTS: CadenceProduct[] = [
 // text doesn't name a category (e.g. it never says returns are free of
 // charge, or whether apparel carries any warranty), we keep the exact
 // wording in `notes` rather than asserting something it doesn't say.
-/** Cadence's own category -> the canonical product-type tags search hard-filters on (see rest-handlers.ts). */
-function cadenceProductTypes(p: CadenceProduct): string[] {
-  if (p.category === "apparel") {
-    if (/cap/i.test(p.name)) return ["hat", "apparel"];
-    if (/tee/i.test(p.name)) return ["shirt", "apparel"];
-    return ["apparel"];
-  }
-  return [p.category];
-}
-
 function toCadenceCatalogItem(p: CadenceProduct): CatalogItem {
   const isFree = p.price >= 100;
   const isBicycle = p.category === "bicycle";
@@ -71,7 +61,6 @@ function toCadenceCatalogItem(p: CadenceProduct): CatalogItem {
     title: p.name,
     description: p.description,
     category: "product",
-    productTypes: cadenceProductTypes(p),
     price: p.price,
     currency: "USD",
     color: p.color,

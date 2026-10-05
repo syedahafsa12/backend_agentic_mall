@@ -1,4 +1,4 @@
-import { query, withPlatformScope } from "@/server/db/pool";
+import { withPlatformScope } from "@/server/db/pool";
 
 export interface VisitPackageRow {
   id: string;
@@ -29,12 +29,6 @@ export interface UniqueVisitRow {
 // restore availability — see recordMerchantVisit for why a merchant with an
 // *existing but exhausted* package does NOT get a fresh one auto-created.
 const DEFAULT_VISIT_LIMIT = 1_000_000;
-
-/** The merchant's current (latest) visit package, for dashboard display — null if no visit has ever been recorded for this merchant yet. */
-export async function getLatestVisitPackage(merchantId: string): Promise<VisitPackageRow | undefined> {
-  const rows = await query<VisitPackageRow>(`select * from visit_packages where merchant_id = $1 order by created_at desc limit 1`, [merchantId]);
-  return rows[0];
-}
 
 export async function createVisitPackage(merchantId: string, visitLimit: number = DEFAULT_VISIT_LIMIT): Promise<VisitPackageRow> {
   const row = await withPlatformScope((client) =>

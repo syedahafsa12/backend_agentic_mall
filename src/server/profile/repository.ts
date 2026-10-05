@@ -123,3 +123,43 @@ export async function unsaveWebsite(userId: string, id: string): Promise<void> {
     await client.query(`delete from saved_websites where id = $1 and user_id = $2`, [id, userId]);
   });
 }
+
+export interface SavedAuctionRow {
+  id: string;
+  user_id: string;
+  auction_id: string;
+  created_at: string;
+}
+
+export async function listSavedAuctions(userId: string) {
+  return withUserScope(userId, async (client) => {
+    const res = await client.query(
+      `select sa.id, sa.auction_id, sa.created_at, a.title, a.status, a.starting_price, a.buy_now_price, a.currency, a.ends_at, m.name as merchant_name
+       from saved_auctions sa
+       join auctions a on a.id = sa.auction_id
+       join merchants m on m.id = a.merchant_id
+       where sa.user_id = $1 order by sa.created_at desc`,
+      [userId],
+    );
+    return res.rows;
+  });
+}
+
+export async function saveAuction(userId: string, auctionId: string): Promise<SavedAuctionRow> {
+  return withUserScope(userId, async (client) => {
+    const res = await client.query<SavedAuctionRow>(
+      `insert into saved_auctions (user_id, auction_id) values ($1, $2)
+       on conflict (user_id, auction_id) do update set user_id = excluded.user_id
+       returning id, user_id, auction_id, created_at`,
+      [userId, auctionId],
+    );
+    if (!res.rows[0]) throw new Error("failed to save auction");
+    return res.rows[0];
+  });
+}
+
+export async function unsaveAuction(userId: string, id: string): Promise<void> {
+  await withUserScope(userId, async (client) => {
+    await client.query(`delete from saved_auctions where id = $1 and user_id = $2`, [id, userId]);
+  });
+}

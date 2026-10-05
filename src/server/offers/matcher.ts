@@ -21,17 +21,10 @@ export function parseRequirements(query: string): Requirements {
   const q = query.toLowerCase();
   const req: Requirements = {};
 
-  // The caller passes the whole accumulated conversation as `query`, so a
-  // later refinement ("increase budget to $900") must win over an earlier
-  // stated limit ("under $700") — take the LAST price constraint mentioned,
-  // not the first regex that happens to match.
-  const priceMatches = [...q.matchAll(/(?:under|less than|budget(?: of| to)?|up to|maximum(?: of)?|max(?: of)?)\s*\$?(\d+(?:\.\d+)?)/g)];
-  const lastPriceMatch = priceMatches[priceMatches.length - 1];
-  if (lastPriceMatch?.[1]) req.maxPrice = Number(lastPriceMatch[1]);
+  const priceMatch = q.match(/under\s*\$?(\d+(?:\.\d+)?)/) ?? q.match(/less than\s*\$?(\d+(?:\.\d+)?)/);
+  if (priceMatch?.[1]) req.maxPrice = Number(priceMatch[1]);
 
-  // Same "most recent refinement wins" rule as price.
-  const colorMentions = COLOR_WORDS.filter((c) => q.includes(c)).sort((a, b) => q.lastIndexOf(a) - q.lastIndexOf(b));
-  const color = colorMentions[colorMentions.length - 1];
+  const color = COLOR_WORDS.find((c) => q.includes(c));
   if (color) req.color = color;
 
   if (/free shipping/.test(q)) req.freeShippingOnly = true;

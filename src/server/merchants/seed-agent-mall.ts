@@ -39,6 +39,7 @@ import { revokeMerchant } from "./authorization";
 import { NORTHSTAR_SLUG, VERTEX_SLUG, URBAN_SLUG } from "@/demo-merchants/catalog";
 import { CADENCE_SLUG } from "@/demo-merchants/cadence-catalog";
 import { LUNA_SLUG } from "@/demo-merchants/luna-catalog";
+import { TRAILWORKS_SLUG } from "@/demo-merchants/trailworks-catalog";
 import type { MerchantRow } from "./types";
 
 const READ_SCOPES = ["products", "inventory", "shipping", "returns", "warranty"] as const;
@@ -61,6 +62,14 @@ export function agentMallMerchantSeeds(appBaseUrl: string) {
       category: "Premium minimalist fashion (DTC)",
       connectorType: "rest" as const,
       connectorConfig: { baseUrl: `${appBaseUrl}/api/demo/luna-apparel` },
+    },
+    {
+      name: "TrailWorks",
+      slug: TRAILWORKS_SLUG,
+      domain: "trailworks.example",
+      category: "Hiking, camping & outdoor gear",
+      connectorType: "rest" as const,
+      connectorConfig: { baseUrl: `${appBaseUrl}/api/demo/trailworks` },
     },
   ];
 }

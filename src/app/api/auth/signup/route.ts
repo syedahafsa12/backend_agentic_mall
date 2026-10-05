@@ -13,10 +13,14 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 });
   const { email, password, fullName } = parsed.data;
 
+  const base = process.env.APP_BASE_URL ?? "http://localhost:3000";
   const { data, error } = await getSupabaseAuthClient().auth.signUp({
     email,
     password,
-    options: fullName ? { data: { full_name: fullName } } : undefined,
+    options: {
+      ...(fullName ? { data: { full_name: fullName } } : {}),
+      emailRedirectTo: `${base}/login`,
+    },
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 

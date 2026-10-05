@@ -3,7 +3,12 @@ import { requireAuthenticatedUser, UnauthorizedError } from "@/server/auth/sessi
 import { getMerchantById } from "@/server/merchants/repository";
 import { buildConnector } from "@/server/connectors/factory";
 
-/** Merchant-owner only — the dashboard's product list, fetched live through the same connector the agent uses (no separate/duplicated product store). */
+/**
+ * Generic per-merchant product listing — docs/api/needed-from-hafsa.md item 2.
+ * Calls the merchant's own connector (REST/MCP/web — whichever it's
+ * configured with) the same way the shopping agent does, rather than
+ * special-casing the three demo stores' own catalog routes.
+ */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuthenticatedUser(req);
@@ -11,10 +16,21 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     if (!merchant || merchant.owner_id !== user.id) return NextResponse.json({ error: "You do not own this merchant." }, { status: 403 });
 
     try {
-      const offers = await buildConnector(merchant).searchProducts({ query: "" });
-      return NextResponse.json({ offers });
-    } catch (err) {
-      return NextResponse.json({ error: `Connector call failed: ${err instanceof Error ? err.message : String(err)}` }, { status: 502 });
+      const connector = buildConnector(merchant);
+      const offers = await connector.searchProducts({ query: "" });
+      const products = offers.map((o) => ({
+        id: o.productId,
+        name: o.title,
+        price: o.price.amount,
+        currency: o.price.currency,
+        inStock: o.availability.inStock,
+      }));
+      return NextResponse.json({ count: products.length, products });
+    } catch {
+      // The connector couldn't be reached (site down, no sync job yet for a
+      // freshly-connected arbitrary website) — not an error for the owner,
+      // just nothing synced yet.
+      return NextResponse.json({ count: 0, products: [], synced: false });
     }
   } catch (err) {
     if (err instanceof UnauthorizedError) return NextResponse.json({ error: err.message }, { status: 401 });

@@ -68,7 +68,6 @@ function toLunaCatalogItem(p: LunaProduct): CatalogItem {
     title: p.name,
     description: `${p.description} Material: ${p.material}.`,
     category: "product",
-    productTypes: [p.category, ...p.tags],
     price: p.price,
     currency: "USD",
     color: p.colors[0]?.name,
